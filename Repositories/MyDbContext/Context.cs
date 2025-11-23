@@ -80,6 +80,11 @@ public partial class Context : DbContext
             entity.Property(e => e.CreatedAt)
                   .IsRequired()
                   .HasDefaultValueSql("GETDATE()");
+
+            entity.HasOne<Roles>()
+                  .WithMany()
+                  .HasForeignKey(e => e.CreatedByRole)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Reviews>(entity =>
@@ -90,11 +95,13 @@ public partial class Context : DbContext
 
             entity.HasOne(e => e.Todo)
                   .WithMany()
-                  .HasForeignKey(e => e.TodoId);
+                  .HasForeignKey(e => e.TodoId)
+                  .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(e => e.ReviewerRoleNavigation)
                   .WithMany()
-                  .HasForeignKey(e => e.ReviewerRole);
+                  .HasForeignKey(e => e.ReviewerRole)
+                  .OnDelete(DeleteBehavior.Restrict);
 
             entity.Property(e => e.ReviewLevel)
                   .IsRequired();
@@ -107,10 +114,10 @@ public partial class Context : DbContext
                   .IsRequired()
                   .HasDefaultValueSql("GETDATE()");
 
-            entity.HasIndex(e => e.TodoId)      
+            entity.HasIndex(e => e.TodoId)
                   .HasDatabaseName("IX_Reviews_TodoId");
 
-            entity.HasIndex(e => e.ReviewerRole) 
+            entity.HasIndex(e => e.ReviewerRole)
                   .HasDatabaseName("IX_Reviews_ReviewerRole");
         });
     }
