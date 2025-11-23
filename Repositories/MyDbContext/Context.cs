@@ -14,6 +14,7 @@ public partial class Context : DbContext
 
     public DbSet<Roles_Permissions> Roles_Permissions { get; set; }
 
+    public DbSet<TodoLists> TodoLists { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,6 +51,24 @@ public partial class Context : DbContext
                   .WithMany(p => p.Roles_Permissions)
                   .HasForeignKey(e => e.PermissionId)
                   .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TodoLists>(entity =>
+        {
+            entity.HasKey(e => e.TodoListId);
+            entity.Property(e => e.TodoListId)
+                  .ValueGeneratedOnAdd();
+            entity.Property(e => e.Title)
+                  .IsRequired()
+                  .HasMaxLength(255);
+            entity.Property(e => e.Status)
+                 .IsRequired()
+                 .HasMaxLength(50);
+            entity.Property(e => e.CreatedByRole)
+                 .IsRequired();
+            entity.Property(e => e.CreatedAt)
+                  .IsRequired()
+                  .HasDefaultValueSql("GETDATE()");
         });
     }
 }
