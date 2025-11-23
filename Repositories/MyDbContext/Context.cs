@@ -16,13 +16,17 @@ public partial class Context : DbContext
 
     public DbSet<TodoLists> TodoLists { get; set; }
 
+    public DbSet<Reviews> Reviews { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Roles>(entity =>
         {
             entity.HasKey(e => e.RoleId);
+
             entity.Property(e => e.RoleId)
                   .ValueGeneratedOnAdd();
+
             entity.Property(e => e.RoleName)
                   .IsRequired()
                   .HasMaxLength(255);
@@ -31,8 +35,10 @@ public partial class Context : DbContext
         modelBuilder.Entity<Permissions>(entity =>
         {
             entity.HasKey(e => e.PermissionId);
+
             entity.Property(e => e.PermissionId)
                   .ValueGeneratedOnAdd();
+
             entity.Property(e => e.PermissionName)
                   .IsRequired()
                   .HasMaxLength(255);
@@ -56,19 +62,56 @@ public partial class Context : DbContext
         modelBuilder.Entity<TodoLists>(entity =>
         {
             entity.HasKey(e => e.TodoListId);
+
             entity.Property(e => e.TodoListId)
                   .ValueGeneratedOnAdd();
+
             entity.Property(e => e.Title)
                   .IsRequired()
                   .HasMaxLength(255);
+
             entity.Property(e => e.Status)
                  .IsRequired()
                  .HasMaxLength(50);
+
             entity.Property(e => e.CreatedByRole)
                  .IsRequired();
+
             entity.Property(e => e.CreatedAt)
                   .IsRequired()
                   .HasDefaultValueSql("GETDATE()");
+        });
+
+        modelBuilder.Entity<Reviews>(entity =>
+        {
+            entity.HasKey(e => e.ReviewId);
+            entity.Property(e => e.ReviewId)
+                  .ValueGeneratedOnAdd();
+
+            entity.HasOne(e => e.Todo)
+                  .WithMany()
+                  .HasForeignKey(e => e.TodoId);
+
+            entity.HasOne(e => e.ReviewerRoleNavigation)
+                  .WithMany()
+                  .HasForeignKey(e => e.ReviewerRole);
+
+            entity.Property(e => e.ReviewLevel)
+                  .IsRequired();
+
+            entity.Property(e => e.Action)
+                  .IsRequired()
+                  .HasMaxLength(50);
+
+            entity.Property(e => e.ReviewedAt)
+                  .IsRequired()
+                  .HasDefaultValueSql("GETDATE()");
+
+            entity.HasIndex(e => e.TodoId)      
+                  .HasDatabaseName("IX_Reviews_TodoId");
+
+            entity.HasIndex(e => e.ReviewerRole) 
+                  .HasDatabaseName("IX_Reviews_ReviewerRole");
         });
     }
 }
