@@ -1,0 +1,112 @@
+### 通用開發環境文件 ###
+# 操作系統生成文件
+.DS_Store           # macOS 系統文件
+Thumbs.db           # Windows 縮略圖緩存
+desktop.ini         # Windows 文件夾自定義設置
+*~                  # Linux 臨時文件
+
+### .NET 核心 ###
+# 構建輸出
+**/[Bb]in/
+**/[Oo]bj/
+**/out/
+**/publish/
+**/artifacts/
+
+# 依賴項和緩存
+**/[Pp]ackages/     # NuGet 本地包目錄
+**/.nuget/
+**/packages.lock.json
+**/project.lock.json
+*.nupkg             # 本地生成的 NuGet 包
+
+# 調試和符號文件
+*.pdb
+*.ilk
+*.lib
+*.exp
+*.cache
+*.dll.metagen
+
+### IDE 配置 ###
+# Visual Studio
+**/.vs/
+**/*.user           # 用戶特定設置
+**/*.suo            # 解決方案用戶選項
+**/*.vsp
+**/*.vssscc
+**/*.sln.iml        # Rider 生成的解決方案文件
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json  # 保留共享設置
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains Rider
+**/.idea/
+**/*.DotSettings
+**/*.DotSettings.user
+
+### 測試相關 ###
+**/[Tt]est[Rr]esult*/  # 單元測試結果
+**/[Cc]overage/       # 代碼覆蓋率報告
+*.coverage
+*.coveragexml
+**/.vs/TestResults/
+*.trx
+
+**/wwwroot/lib/      
+**/node_modules/     
+**/jspm_packages/
+**/bower_components/
+
+### 環境和敏感文件 ###
+.env                 
+.env.local
+.env.development
+.env.production
+**/appsettings.*.json
+!**/appsettings.json 
+**/secrets.json   
+
+### 日誌和臨時文件 ###
+*.log              
+*.tmp                
+*.temp
+*.bak                
+*.swp            
+
+### 其他工具 ###
+# SonarQube
+.sonarqube/
+
+# Docker
+**/.dockerignore
+**/docker-compose.*.yml
+**/docker-data/
+
+# Cake 構建工具
+tools/
+!tools/packages.config
+
+# FAKE 構建工具
+.fake/
+
+# NuGet 全局配置
+**/NuGet.Config      # 本地 NuGet 配置（可選保留）
+
+### 壓縮文件 ###
+*.zip
+*.7z
+*.tar.gz
+*.rar
+
+### 可執行文件和腳本 ###
+*.exe
+*.dll
+*.bat
+*.cmd
+*.ps1
+*.sh

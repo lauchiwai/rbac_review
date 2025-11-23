@@ -1,0 +1,6 @@
+@rbac_reviews_HostAddress = http://localhost:5063
+
+GET {{rbac_reviews_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
