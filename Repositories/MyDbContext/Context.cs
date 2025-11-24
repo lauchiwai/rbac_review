@@ -106,13 +106,28 @@ public partial class Context : DbContext
             entity.Property(e => e.ReviewLevel)
                   .IsRequired();
 
+            entity.HasIndex(e => e.ReviewLevel)
+                .HasDatabaseName("IX_Reviews_ReviewLevel");
+
             entity.Property(e => e.Action)
                   .IsRequired()
+                  .HasMaxLength(50);
+
+            entity.Property(e => e.Comment)
+                  .HasMaxLength(500);
+
+            entity.Property(e => e.PreviousStatus)
+                  .HasMaxLength(50);
+
+            entity.Property(e => e.NewStatus)
                   .HasMaxLength(50);
 
             entity.Property(e => e.ReviewedAt)
                   .IsRequired()
                   .HasDefaultValueSql("GETDATE()");
+
+            entity.HasIndex(e => e.ReviewedAt)
+                .HasDatabaseName("IX_Reviews_ReviewedAt");
 
             entity.HasIndex(e => e.TodoId)
                   .HasDatabaseName("IX_Reviews_TodoId");

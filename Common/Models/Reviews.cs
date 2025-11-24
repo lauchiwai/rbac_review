@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Common.Models;
+﻿namespace Common.Models;
 
 public class Reviews
 {
@@ -19,6 +13,12 @@ public class Reviews
     public string Action { get; set; } = null!;
 
     public DateTime ReviewedAt { get; set; }
+
+    public string? Comment { get; set; }
+
+    public string? PreviousStatus { get; set; }
+
+    public string? NewStatus { get; set; }
 
     public virtual TodoLists Todo { get; set; } = null!;
 

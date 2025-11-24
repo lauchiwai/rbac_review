@@ -54,24 +54,5 @@ namespace rbac_reviews.Controllers
             var result = await _rbacService.GetRolesByPermissionAsync(permissionId);
             return Ok(result);
         }
-
-        [HttpGet("roles/{roleId}/permissions/verify")]
-        public async Task<ActionResult<ResultDto<PermissionCheckResponse>>> VerifyRolePermission(int roleId, [FromQuery] string permissionName)
-        {
-            var request = new CheckPermissionRequest
-            {
-                RoleId = roleId,
-                PermissionName = permissionName
-            };
-            var result = await _rbacService.CheckPermissionAsync(request);
-            return Ok(result);
-        }
-
-        [HttpGet("roles/{roleId}/permissions/check")]
-        public async Task<ActionResult<ResultDto<bool>>> CheckRolePermission(int roleId, [FromQuery] string permissionName)
-        {
-            var result = await _rbacService.HasPermissionAsync(roleId, permissionName);
-            return Ok(result);
-        }
     }
 }

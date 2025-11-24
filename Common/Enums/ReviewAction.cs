@@ -10,7 +10,6 @@ public static class ReviewAction
     public const string Completed = "completed";
     public const string Cancelled = "cancelled";
 
-    // 擴展方法來提供額外功能
     public static bool IsValidStatus(string status)
     {
         return status switch
@@ -30,32 +29,17 @@ public static class ReviewAction
     {
         return status switch
         {
-            Pending => "待審核",
-            InProgress => "審核中",
-            Approved => "已批准",
-            Rejected => "已拒絕",
-            Returned => "已退回",
-            Completed => "已完成",
-            Cancelled => "已取消",
-            _ => "未知狀態"
+            Pending => "Pending",
+            InProgress => "InProgress",
+            Approved => "Approved",
+            Rejected => "Rejected",
+            Returned => "Returned",
+            Completed => "Completed",
+            Cancelled => "Cancelled",
+            _ => "unknow"
         };
     }
 
-    public static List<string> GetAllStatuses()
-    {
-        return new List<string>
-        {
-            Pending,
-            InProgress,
-            Approved,
-            Rejected,
-            Returned,
-            Completed,
-            Cancelled
-        };
-    }
-
-    // 狀態轉換規則
     public static bool CanTransitionFromTo(string fromStatus, string toStatus)
     {
         return (fromStatus, toStatus) switch

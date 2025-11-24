@@ -3,20 +3,26 @@ using System.ComponentModel;
 
 public enum Permission
 {
-    [Description("允許創建待辦事項（對應狀態初始化）")]
+    [Description("Allow creating to-do items (corresponds to initial status)")]
     TodoCreate = 8,
 
-    [Description("允許執行一級審核（例如更新狀態為 \"approved\" 或 \"returned\"）")]
+    [Description("Allow performing first-level review (e.g., updating status to \"approved\" or \"returned\")")]
     TodoReviewLevel1 = 9,
 
-    [Description("允許執行二級審核（例如更新狀態為 \"approved\" 或 \"returned\"）")]
+    [Description("Allow performing second-level review (e.g., updating status to \"approved\" or \"returned\")")]
     TodoReviewLevel2 = 10,
 
-    [Description("允許查看所有待辦事項（用於監控和追蹤）")]
-    TodoView = 11,
+    [Description("Allow viewing own created to-do items")]
+    TodoViewOwn = 11,
 
-    [Description("允許管理角色和權限配置（僅管理員使用）")]
-    AdminManage = 12
+    [Description("Allow viewing first-level review related items (status: pending, returned)")]
+    TodoViewLevel1 = 12,
+
+    [Description("Allow viewing second-level review related items (status: in_progress)")]
+    TodoViewLevel2 = 13,
+
+    [Description("Allow managing roles and permissions configuration (admin only)")]
+    AdminManage = 14
 }
 
 public static class PermissionExtensions
@@ -28,7 +34,9 @@ public static class PermissionExtensions
             Permission.TodoCreate => "todo_create",
             Permission.TodoReviewLevel1 => "todo_review_level1",
             Permission.TodoReviewLevel2 => "todo_review_level2",
-            Permission.TodoView => "todo_view",
+            Permission.TodoViewOwn => "todo_view_own",
+            Permission.TodoViewLevel1 => "todo_view_level1",
+            Permission.TodoViewLevel2 => "todo_view_level2",
             Permission.AdminManage => "admin_manage",
             _ => throw new ArgumentOutOfRangeException(nameof(permission), permission, null)
         };
@@ -41,4 +49,3 @@ public static class PermissionExtensions
         return attribute?.Description ?? permission.ToString();
     }
 }
-

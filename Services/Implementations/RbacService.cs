@@ -165,28 +165,6 @@ public class RbacService : IRbacService
         }
     }
 
-    public async Task<ResultDto<PermissionCheckResponse>> CheckPermissionAsync(CheckPermissionRequest request)
-    {
-        try
-        {
-            var hasPermission = await HasPermissionAsync(request.RoleId, request.PermissionName);
-
-            var response = new PermissionCheckResponse
-            {
-                RoleId = request.RoleId,
-                PermissionName = request.PermissionName,
-                HasPermission = hasPermission.Data,
-                Message = hasPermission.Data ? "Permission granted" : "Permission denied"
-            };
-
-            return ResultDto<PermissionCheckResponse>.Success(response);
-        }
-        catch (Exception ex)
-        {
-            return ResultDto<PermissionCheckResponse>.Failure($"Error checking permission: {ex.Message}");
-        }
-    }
-
     public async Task<ResultDto<bool>> HasPermissionAsync(int roleId, string permissionName)
     {
         try
