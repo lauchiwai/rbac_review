@@ -6,7 +6,7 @@ public class Reviews
 
     public int TodoId { get; set; }
 
-    public int ReviewerRole { get; set; }
+    public int ReviewerUserId { get; set; }
 
     public int ReviewLevel { get; set; }
 
@@ -20,7 +20,11 @@ public class Reviews
 
     public string? NewStatus { get; set; }
 
+    public int? NextReviewerUserId { get; set; }  
+
     public virtual TodoLists Todo { get; set; } = null!;
 
-    public virtual Roles ReviewerRoleNavigation { get; set; } = null!;
+    public virtual Users ReviewerUser { get; set; } = null!;
+
+    public virtual Users? NextReviewerUser { get; set; }  
 }

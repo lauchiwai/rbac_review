@@ -8,4 +8,3 @@ public class Permissions
 
     public virtual ICollection<Roles_Permissions> Roles_Permissions { get; set; } = new List<Roles_Permissions>();
 }
-
