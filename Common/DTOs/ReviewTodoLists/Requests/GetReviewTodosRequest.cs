@@ -2,7 +2,7 @@
 
 public class GetReviewTodosRequest
 {
-    public int CurrentUserRoleId { get; set; }
+    public int CurrentUserId { get; set; }
 
     public string? Status { get; set; } 
 

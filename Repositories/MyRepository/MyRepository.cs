@@ -7,19 +7,23 @@ namespace Repositories.MyRepository;
 public interface IRepository<T> where T : class
 {
     Task<T> GetByIdAsync(int id);
-
     Task<IEnumerable<T>> GetAllAsync();
-
     Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
-
     Task<T> AddAsync(T entity);
-
     Task UpdateAsync(T entity);
-
     Task DeleteAsync(T entity);
-
     Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
 
+    Task<IEnumerable<T>> FindWithIncludesAsync(
+        Expression<Func<T, bool>> predicate,
+        params Expression<Func<T, object>>[] includes);
+
+    Task<IEnumerable<TResult>> SelectAsync<TResult>(
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TResult>> selector,
+        params Expression<Func<T, object>>[] includes);
+
+    IQueryable<T> GetQueryable();
 }
 
 public class Repository<T> : IRepository<T> where T : class
@@ -70,5 +74,48 @@ public class Repository<T> : IRepository<T> where T : class
     public async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
     {
         return await _dbSet.AnyAsync(predicate);
+    }
+
+    public IQueryable<T> GetQueryable()
+    {
+        return _dbSet.AsQueryable();
+    }
+
+    public async Task<IEnumerable<T>> FindWithIncludesAsync(
+        Expression<Func<T, bool>> predicate,
+        params Expression<Func<T, object>>[] includes)
+    {
+        IQueryable<T> query = _dbSet;
+
+        foreach (var include in includes)
+        {
+            query = query.Include(include);
+        }
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<IEnumerable<TResult>> SelectAsync<TResult>(
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TResult>> selector,
+        params Expression<Func<T, object>>[] includes)
+    {
+        IQueryable<T> query = _dbSet;
+
+        foreach (var include in includes)
+        {
+            query = query.Include(include);
+        }
+
+        if (predicate != null)
+        {
+            query = query.Where(predicate);
+        }
+
+        return await query.Select(selector).ToListAsync();
     }
 }

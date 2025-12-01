@@ -8,7 +8,9 @@ public class TodoWithReviewHistoryViewModel
 
     public string Status { get; set; }
 
-    public int CreatedByRoleId { get; set; }
+    public int CreatedByUserId { get; set; }
+
+    public int? CurrentReviewerUserId { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
@@ -18,6 +20,8 @@ public class TodoWithReviewHistoryViewModel
 public class ReviewHistoryViewModel
 {
     public int ReviewId { get; set; }
+
+    public int ReviewerUserId { get; set; }
 
     public int ReviewerRoleId { get; set; }
 

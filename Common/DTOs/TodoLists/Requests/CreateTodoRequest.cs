@@ -4,5 +4,7 @@ public class CreateTodoRequest
 {
     public string Title { get; set; } = null!;
 
-    public int CreatedByRoleId { get; set; }
+    public int CreatedByUserId { get; set; }
+
+    public int ReviewerUserId { get; set; }
 }

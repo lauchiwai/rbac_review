@@ -6,6 +6,6 @@ public class UpdateTodoRequest
 
     public string Title { get; set; } = null!;
 
-    public int CurrentUserRoleId { get; set; }
+    public int CurrentUserId { get; set; }
 }
 

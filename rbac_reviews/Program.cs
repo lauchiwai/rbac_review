@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.MyDbContext;
 using Repositories.MyRepository;
+using Services.Helpers;
 using Services.Implementations;
 using Services.Interfaces;
 
@@ -8,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<TodoQueryHelper>();
+builder.Services.AddScoped<ReviewQueryHelper>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRolesService, RolesService>();

@@ -8,7 +8,9 @@ public class TodoViewModel
 
     public string Status { get; set; } = null!;
 
-    public int CreatedByRoleId { get; set; }
+    public int CreatedByUserId { get; set; }
+
+    public int? CurrentReviewerUserId { get; set; }
 
     public DateTime CreatedAt { get; set; }
 }

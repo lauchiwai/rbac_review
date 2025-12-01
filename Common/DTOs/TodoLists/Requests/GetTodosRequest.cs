@@ -2,7 +2,7 @@
 
 public class GetTodosRequest
 {
-    public int CurrentUserRoleId { get; set; }
+    public int CurrentUserId { get; set; }
 
     public string? Status { get; set; }
 }
