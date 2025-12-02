@@ -61,18 +61,4 @@ public class UserController : ControllerBase
         var result = await _userService.GetUserRolesAsync(userId);
         return Ok(result);
     }
-
-    [HttpGet("roles/{roleId}/users")]
-    public async Task<ActionResult<ResultDto<RoleUsersResponse>>> GetUsersByRole(int roleId)
-    {
-        var result = await _userService.GetUsersByRoleAsync(roleId);
-        return Ok(result);
-    }
-
-    [HttpGet("{userId}/has-role/{roleId}")]
-    public async Task<ActionResult<ResultDto<bool>>> HasRole(int userId, int roleId)
-    {
-        var result = await _userService.HasRoleAsync(userId, roleId);
-        return Ok(result);
-    }
 }

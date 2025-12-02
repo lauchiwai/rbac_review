@@ -23,13 +23,6 @@ public class RolesController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("get/{id}")]
-    public async Task<ActionResult<ResultDto<Roles>>> GetRoleById(int id)
-    {
-        var result = await _rolesService.GetRoleByIdAsync(id);
-        return Ok(result);
-    }
-
     [HttpPost("create")]
     public async Task<ActionResult<ResultDto<Roles>>> CreateRole([FromBody] string roleName)
     {

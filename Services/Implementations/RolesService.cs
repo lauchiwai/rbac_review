@@ -9,20 +9,28 @@ namespace Services.Implementations
     public class RolesService : IRolesService
     {
         private readonly IRepository<Roles> _repository;
-        private readonly IRoleRepository _roleRepository;
 
-        public RolesService(IRepository<Roles> repository, IRoleRepository roleRepository)
+
+        public RolesService(
+            IRepository<Roles> repository)
         {
             _repository = repository;
-            _roleRepository = roleRepository;
         }
 
         public async Task<ResultDto<IEnumerable<RoleListResponse>>> GetAllRolesAsync()
         {
             try
             {
-                var roles = await _roleRepository.GetAllRoleListResponseAsync();
-                return ResultDto<IEnumerable<RoleListResponse>>.Success(roles);
+                var roles = await _repository.FindWithIncludesAsync(null, r => r.Roles_Permissions);
+
+                var roleResponses = roles.Select(r => new RoleListResponse
+                {
+                    RoleId = r.RoleId,
+                    RoleName = r.RoleName,
+                    PermissionCount = r.Roles_Permissions.Count
+                }).ToList();
+
+                return ResultDto<IEnumerable<RoleListResponse>>.Success(roleResponses);
             }
             catch (Exception ex)
             {
@@ -30,30 +38,12 @@ namespace Services.Implementations
             }
         }
 
-        public async Task<ResultDto<RoleResponse>> GetRoleByIdAsync(int roleId)
-        {
-            try
-            {
-                var role = await _roleRepository.GetRoleResponseByIdAsync(roleId);
-
-                if (role == null)
-                {
-                    return ResultDto<RoleResponse>.Failure($"Role with ID {roleId} not found");
-                }
-
-                return ResultDto<RoleResponse>.Success(role);
-            }
-            catch (Exception ex)
-            {
-                return ResultDto<RoleResponse>.Failure($"Error retrieving role: {ex.Message}");
-            }
-        }
-
         public async Task<ResultDto<RoleResponse>> CreateRoleAsync(string roleName)
         {
             try
             {
-                if (await _roleRepository.RoleExistsAsync(roleName))
+                var existingRole = await _repository.FindAsync(r => r.RoleName == roleName);
+                if (existingRole.Any())
                 {
                     return ResultDto<RoleResponse>.Failure($"Role with name '{roleName}' already exists");
                 }
@@ -65,7 +55,13 @@ namespace Services.Implementations
 
                 var createdRole = await _repository.AddAsync(role);
 
-                var roleResponse = await _roleRepository.GetRoleResponseByIdAsync(createdRole.RoleId);
+                var roleResponse = new RoleResponse
+                {
+                    RoleId = createdRole.RoleId,
+                    RoleName = createdRole.RoleName,
+                    RolePermissions = new List<RolePermissionResponse>()
+                };
+
                 return ResultDto<RoleResponse>.Success(roleResponse);
             }
             catch (Exception ex)
@@ -78,7 +74,10 @@ namespace Services.Implementations
         {
             try
             {
-                if (await _roleRepository.RoleExistsAsync(role.RoleId, role.RoleName))
+                var existingRoles = await _repository.FindAsync(r =>
+                    r.RoleName == role.RoleName && r.RoleId != role.RoleId);
+
+                if (existingRoles.Any())
                 {
                     return ResultDto.Failure($"Role with name '{role.RoleName}' already exists");
                 }

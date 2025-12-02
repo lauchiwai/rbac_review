@@ -8,7 +8,6 @@ namespace Services.Interfaces
     {
         Task<ResultDto<IEnumerable<RoleListResponse>>> GetAllRolesAsync();
 
-        Task<ResultDto<RoleResponse>> GetRoleByIdAsync(int roleId);
 
         Task<ResultDto<RoleResponse>> CreateRoleAsync(string roleName);
 

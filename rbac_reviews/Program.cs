@@ -12,7 +12,6 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<TodoQueryHelper>();
 builder.Services.AddScoped<ReviewQueryHelper>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRolesService, RolesService>();
 builder.Services.AddScoped<IRbacService, RbacService>();
 builder.Services.AddScoped<IPermissionsService, PermissionsService>();
