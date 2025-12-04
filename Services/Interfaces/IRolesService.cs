@@ -2,17 +2,15 @@
 using Common.DTOs.Roles.Responses;
 using Common.Models;
 
-namespace Services.Interfaces
+namespace Services.Interfaces;
+
+public interface IRolesService
 {
-    public interface IRolesService
-    {
-        Task<ResultDto<IEnumerable<RoleListResponse>>> GetAllRolesAsync();
+    Task<ResultDto<IEnumerable<RoleListResponse>>> GetAllRolesAsync();
 
+    Task<ResultDto<RoleResponse>> CreateRoleAsync(string roleName);
 
-        Task<ResultDto<RoleResponse>> CreateRoleAsync(string roleName);
+    Task<ResultDto> UpdateRoleAsync(Roles role);
 
-        Task<ResultDto> UpdateRoleAsync(Roles role);
-
-        Task<ResultDto> DeleteRoleAsync(int roleId);
-    }
+    Task<ResultDto> DeleteRoleAsync(int roleId);
 }
