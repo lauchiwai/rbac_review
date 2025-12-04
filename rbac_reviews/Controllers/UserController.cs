@@ -17,33 +17,28 @@ public class UserController : ControllerBase
         _userService = userService;
     }
 
-    [HttpPost("create")]
+    [HttpPost("CreateUser")]
     public async Task<ActionResult<ResultDto<CreateUserResponse>>> CreateUser()
     {
         var result = await _userService.CreateUserAsync();
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpDelete("delete/{userId}")]
+    [HttpDelete("DeleteUser/{userId}")]
     public async Task<ActionResult<ResultDto>> DeleteUser(int userId)
     {
         var result = await _userService.DeleteUserAsync(userId);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpPost("{userId}/roles/{roleId}")]
-    public async Task<ActionResult<ResultDto>> AssignRoleToUser(int userId, int roleId)
+    [HttpPost("AssignRoleToUser")]
+    public async Task<ActionResult<ResultDto>> AssignRoleToUser([FromBody] AssignRoleToUserRequest request)
     {
-        var request = new AssignRoleToUserRequest
-        {
-            UserId = userId,
-            RoleId = roleId
-        };
         var result = await _userService.AssignRoleToUserAsync(request);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpDelete("{userId}/roles/{roleId}")]
+    [HttpDelete("RemoveRoleFromUser/users/{userId}/roles/{roleId}")]
     public async Task<ActionResult<ResultDto>> RemoveRoleFromUser(int userId, int roleId)
     {
         var request = new RemoveRoleFromUserRequest
@@ -52,13 +47,13 @@ public class UserController : ControllerBase
             RoleId = roleId
         };
         var result = await _userService.RemoveRoleFromUserAsync(request);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpGet("roles/{userId}")]
+    [HttpGet("GetUserRoles/{userId}")]
     public async Task<ActionResult<ResultDto<UserRolesResponse>>> GetUserRoles(int userId)
     {
         var result = await _userService.GetUserRolesAsync(userId);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 }

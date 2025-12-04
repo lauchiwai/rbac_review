@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.MyDbContext;
 using Repositories.MyRepository;
-using Services.Helpers;
 using Services.Implementations;
 using Services.Interfaces;
 
@@ -9,14 +8,12 @@ var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-builder.Services.AddScoped<TodoQueryHelper>();
-builder.Services.AddScoped<ReviewQueryHelper>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IRolesService, RolesService>();
 builder.Services.AddScoped<IRbacService, RbacService>();
 builder.Services.AddScoped<IPermissionsService, PermissionsService>();
-builder.Services.AddScoped<ITodoListsService, TodoListsService>();
-builder.Services.AddScoped<ITodoReviewService, TodoReviewService>();
+builder.Services.AddScoped<ITodoService, TodoService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder.Services.AddDbContext<Context>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")),

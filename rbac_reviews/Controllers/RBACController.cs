@@ -17,19 +17,14 @@ public class RbacController : ControllerBase
         _rbacService = rbacService;
     }
 
-    [HttpPost("roles/{roleId}/permissions/{permissionId}")]
-    public async Task<ActionResult<ResultDto>> AssignPermissionToRole(int roleId, int permissionId)
+    [HttpPost("AssignPermissionToRole")]
+    public async Task<ActionResult<ResultDto>> AssignPermissionToRole([FromBody] AssignPermissionRequest request)
     {
-        var request = new AssignPermissionRequest
-        {
-            RoleId = roleId,
-            PermissionId = permissionId
-        };
         var result = await _rbacService.AssignPermissionAsync(request);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpDelete("roles/{roleId}/permissions/{permissionId}")]
+    [HttpDelete("RemovePermissionFromRole/roles/{roleId}/permissions/{permissionId}")]
     public async Task<ActionResult<ResultDto>> RemovePermissionFromRole(int roleId, int permissionId)
     {
         var request = new RemovePermissionRequest
@@ -38,20 +33,20 @@ public class RbacController : ControllerBase
             PermissionId = permissionId
         };
         var result = await _rbacService.RemovePermissionAsync(request);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpGet("roles/{roleId}/permissions")]
+    [HttpGet("GetRolePermissions/roles/{roleId}")]
     public async Task<ActionResult<ResultDto<RolePermissionsResponse>>> GetRolePermissions(int roleId)
     {
         var result = await _rbacService.GetRolePermissionsAsync(roleId);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpGet("permissions/{permissionId}/roles")]
+    [HttpGet("GetRolesWithPermission/permissions/{permissionId}")]
     public async Task<ActionResult<ResultDto<PermissionRolesResponse>>> GetRolesWithPermission(int permissionId)
     {
         var result = await _rbacService.GetRolesByPermissionAsync(permissionId);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 }

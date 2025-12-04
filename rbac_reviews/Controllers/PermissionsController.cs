@@ -16,38 +16,38 @@ public class PermissionsController : ControllerBase
         _permissionsService = permissionsService;
     }
 
-    [HttpGet("get-all")]
+    [HttpGet("GetAllPermissions")]
     public async Task<ActionResult<ResultDto<IEnumerable<Permissions>>>> GetAllPermissions()
     {
         var result = await _permissionsService.GetAllPermissionsAsync();
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpGet("get/{id}")]
+    [HttpGet("GetPermissionById/{id}")]
     public async Task<ActionResult<ResultDto<Permissions>>> GetPermissionById(int id)
     {
         var result = await _permissionsService.GetPermissionByIdAsync(id);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpPost("create")]
+    [HttpPost("CreatePermission")]
     public async Task<ActionResult<ResultDto<Permissions>>> CreatePermission([FromBody] string permissionName)
     {
         var result = await _permissionsService.CreatePermissionAsync(permissionName);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpPut("update/{id}")]
+    [HttpPut("UpdatePermission/{id}")]
     public async Task<ActionResult<ResultDto>> UpdatePermission(int id, [FromBody] Permissions permission)
     {
         var result = await _permissionsService.UpdatePermissionAsync(permission);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpDelete("delete/{id}")]
+    [HttpDelete("DeletePermission/{id}")]
     public async Task<ActionResult<ResultDto>> DeletePermission(int id)
     {
         var result = await _permissionsService.DeletePermissionAsync(id);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 }

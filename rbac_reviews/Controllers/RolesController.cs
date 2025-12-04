@@ -16,31 +16,31 @@ public class RolesController : ControllerBase
         _rolesService = rolesService;
     }
 
-    [HttpGet("get-all")]
+    [HttpGet("GetAllRoles")]
     public async Task<ActionResult<ResultDto<IEnumerable<Roles>>>> GetAllRoles()
     {
         var result = await _rolesService.GetAllRolesAsync();
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpPost("create")]
+    [HttpPost("CreateRole")]
     public async Task<ActionResult<ResultDto<Roles>>> CreateRole([FromBody] string roleName)
     {
         var result = await _rolesService.CreateRoleAsync(roleName);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpPut("update/{id}")]
-    public async Task<ActionResult<ResultDto>> UpdateRole(int id, [FromBody] Roles role)
+    [HttpPut("UpdateRole")]
+    public async Task<ActionResult<ResultDto>> UpdateRole([FromBody] Roles role)
     {
         var result = await _rolesService.UpdateRoleAsync(role);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpDelete("delete/{id}")]
+    [HttpDelete("DeleteRole/{id}")]
     public async Task<ActionResult<ResultDto>> DeleteRole(int id)
     {
         var result = await _rolesService.DeleteRoleAsync(id);
-        return Ok(result);
+        return StatusCode((int)result.StatusCode, result);
     }
 }
