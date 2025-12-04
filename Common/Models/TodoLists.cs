@@ -4,6 +4,10 @@ public class TodoLists
 {
     public int TodoListId { get; set; }
 
+    public int? TemplateId { get; set; }
+
+    public int? CurrentStageId { get; set; }
+
     public string Title { get; set; } = null!;
 
     public string Status { get; set; } = null!;
@@ -13,6 +17,10 @@ public class TodoLists
     public int? CurrentReviewerUserId { get; set; }  
 
     public DateTime CreatedAt { get; set; }
+
+    public virtual ReviewTemplates? ReviewTemplate { get; set; }
+
+    public virtual ReviewStages? CurrentStage { get; set; }
 
     public virtual Users CreatedByUser { get; set; } = null!;
 
