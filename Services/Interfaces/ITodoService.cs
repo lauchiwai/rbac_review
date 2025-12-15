@@ -10,10 +10,6 @@ namespace Services.Interfaces;
 
 public interface ITodoService
 {
-    Task<ResultDto<TemplateInitResponse>> InitializeReviewTemplateAsync(TemplateInitRequest request);
-
-    Task<ResultDto<TransitionSetupResponse>> SetupStageTransitionsAsync(TransitionSetupRequest request);
-
     Task<ResultDto<TodoCreateResponse>> CreateTodoAsync(TodoCreateRequest request);
 
     Task<ResultDto<bool>> HasPermissionAsync(int userId, string permissionName);

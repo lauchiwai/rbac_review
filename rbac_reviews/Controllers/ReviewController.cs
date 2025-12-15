@@ -17,7 +17,7 @@ public class ReviewController : ControllerBase
         _reviewService = reviewService;
     }
 
-    [HttpGet("GetPendingReviews/{UserId}")]
+    [HttpGet("GetPendingReviews/{userId}")]
     public async Task<ActionResult<ResultDto<List<PendingReviewResponse>>>> GetPendingReviews(
        int userId)
     {

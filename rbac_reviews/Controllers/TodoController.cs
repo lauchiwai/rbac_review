@@ -21,22 +21,6 @@ public class TodoController : ControllerBase
         _todoService = todoService;
     }
 
-    [HttpPost("InitializeReviewTemplate")]
-    public async Task<ActionResult<ResultDto<TemplateInitResponse>>> InitializeReviewTemplate(
-        [FromBody] TemplateInitRequest request)
-    {
-        var result = await _todoService.InitializeReviewTemplateAsync(request);
-        return StatusCode((int)result.StatusCode, result);
-    }
-
-    [HttpPost("SetupStageTransitions")]
-    public async Task<ActionResult<ResultDto<TransitionSetupResponse>>> SetupStageTransitions(
-        [FromBody] TransitionSetupRequest request)
-    {
-        var result = await _todoService.SetupStageTransitionsAsync(request);
-        return StatusCode((int)result.StatusCode, result);
-    }
-
     [HttpPost("CreateTodo")]
     public async Task<ActionResult<ResultDto<TodoCreateResponse>>> CreateTodo(
         [FromBody] TodoCreateRequest request)

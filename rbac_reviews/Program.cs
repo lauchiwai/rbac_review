@@ -14,6 +14,7 @@ builder.Services.AddScoped<IRbacService, RbacService>();
 builder.Services.AddScoped<IPermissionsService, PermissionsService>();
 builder.Services.AddScoped<ITodoService, TodoService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IReviewTemplateService, ReviewTemplateService>();
 
 builder.Services.AddDbContext<Context>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")),
