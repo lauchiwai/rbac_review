@@ -33,14 +33,37 @@ public class ReviewController : ControllerBase
         return StatusCode((int)result.StatusCode, result);
     }
 
-    [HttpPost("ExecuteReviewAction")]
-    public async Task<ActionResult<ResultDto<ReviewActionResponse>>> ExecuteReviewAction(
-        [FromBody] ReviewActionRequest request)
+    [HttpPost("ExecuteApproveAction")]
+    public async Task<ActionResult<ResultDto<ReviewActionResponse>>> ExecuteApproveAction(
+        [FromBody] ReviewApproveRequest request)
     {
-        var result = await _reviewService.ExecuteReviewActionAsync(request);
+        var result = await _reviewService.ExecuteApproveActionAsync(request);
         return StatusCode((int)result.StatusCode, result);
     }
 
+    [HttpPost("ExecuteReturnAction")]
+    public async Task<ActionResult<ResultDto<ReviewActionResponse>>> ExecuteReturnAction(
+        [FromBody] ReviewActionRequest request)
+    {
+        var result = await _reviewService.ExecuteReturnActionAsync(request);
+        return StatusCode((int)result.StatusCode, result);
+    }
+
+    [HttpPost("ExecuteRejectAction")]
+    public async Task<ActionResult<ResultDto<ReviewActionResponse>>> ExecuteRejectAction(
+        [FromBody] ReviewActionRequest request)
+    {
+        var result = await _reviewService.ExecuteRejectActionAsync(request);
+        return StatusCode((int)result.StatusCode, result);
+    }
+
+    [HttpPost("ExecuteResubmitAction")]
+    public async Task<ActionResult<ResultDto<ReviewActionResponse>>> ExecuteResubmitAction(
+        [FromBody] ReviewActionRequest request)
+    {
+        var result = await _reviewService.ExecuteResubmitActionAsync(request);
+        return StatusCode((int)result.StatusCode, result);
+    }
 
     [HttpPost("GetReviewHistory/users/{userId}/todos/{todoId}")]
     public async Task<ActionResult<ResultDto<ReviewHistoryFullResponse>>> GetReviewHistory(

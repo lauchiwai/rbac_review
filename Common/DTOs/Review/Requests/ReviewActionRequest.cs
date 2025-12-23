@@ -3,7 +3,8 @@
 public class ReviewActionRequest
 {
     public int UserId { get; set; }
+
     public int TodoId { get; set; }
-    public string Action { get; set; } = null!; // approve, return, reject
+
     public string? Comment { get; set; }
 }
