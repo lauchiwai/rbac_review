@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Repositories.MyDbContext;
 using Repositories.MyRepository;
+using Services.Helpers;
 using Services.Implementations;
 using Services.Interfaces;
 
@@ -15,6 +16,14 @@ builder.Services.AddScoped<IPermissionsService, PermissionsService>();
 builder.Services.AddScoped<ITodoService, TodoService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IReviewTemplateService, ReviewTemplateService>();
+
+builder.Services.AddScoped<ReviewQueryHelper>();
+builder.Services.AddScoped<IUserNameHelper, UserNameHelper>();
+builder.Services.AddScoped<IReviewHelper, ReviewHelper>();
+builder.Services.AddScoped<IReviewQueryHelper, ReviewQueryHelper>();
+builder.Services.AddScoped<ITodoQueryHelper, TodoQueryHelper>();
+
+builder.Services.AddMemoryCache();
 
 builder.Services.AddDbContext<Context>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")),

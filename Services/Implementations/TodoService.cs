@@ -1,10 +1,6 @@
 ﻿using Common.DTOs;
-using Common.DTOs.Template.Requests;
-using Common.DTOs.Template.Response;
 using Common.DTOs.Todo.Requests;
 using Common.DTOs.Todo.Response;
-using Common.DTOs.Transition.Requests;
-using Common.DTOs.Transition.Response;
 using Common.Models;
 using Repositories.MyRepository;
 using Services.Helpers;
@@ -15,37 +11,23 @@ namespace Services.Implementations;
 public class TodoService : ITodoService
 {
     private readonly IRepository<TodoLists> _todoRepository;
-    private readonly IRepository<ReviewTemplates> _templateRepository;
-    private readonly IRepository<ReviewStages> _stageRepository;
-    private readonly IRepository<StageTransitions> _transitionRepository;
-
-    private readonly TodoQueryHelper _queryHelper;
+    private readonly IRepository<Users> _userRepository;
+    private readonly IRepository<Users_Roles> _userRoleRepository;
+    private readonly ITodoQueryHelper _queryHelper;
+    private readonly IReviewQueryHelper _reviewQueryHelper;
 
     public TodoService(
         IRepository<TodoLists> todoRepository,
         IRepository<Users> userRepository,
-        IRepository<Roles> roleRepository,
-        IRepository<Permissions> permissionRepository,
-        IRepository<ReviewTemplates> templateRepository,
-        IRepository<ReviewStages> stageRepository,
-        IRepository<StageTransitions> transitionRepository,
         IRepository<Users_Roles> userRoleRepository,
-        IRepository<Roles_Permissions> rolePermissionRepository)
+        ITodoQueryHelper todoQueryHelper,
+        IReviewQueryHelper reviewQueryHelper)
     {
         _todoRepository = todoRepository;
-        _templateRepository = templateRepository;
-        _stageRepository = stageRepository;
-        _transitionRepository = transitionRepository;
-
-        _queryHelper = new TodoQueryHelper(
-            userRoleRepository,
-            rolePermissionRepository,
-            permissionRepository,
-            templateRepository,
-            stageRepository,
-            transitionRepository,
-            userRepository,
-            roleRepository);
+        _userRepository = userRepository;
+        _userRoleRepository = userRoleRepository;
+        _queryHelper = todoQueryHelper;
+        _reviewQueryHelper = reviewQueryHelper;
     }
 
     public async Task<ResultDto<bool>> HasPermissionAsync(int userId, string permissionName)
@@ -81,7 +63,29 @@ public class TodoService : ITodoService
             if (!firstStagesDict.TryGetValue(request.TemplateId, out var firstStage))
                 return ResultDto<TodoCreateResponse>.Failure("Review template does not have any stages configured");
 
-            // 4. Create todo item
+            // 4. Determine reviewer according to priority order
+            int? reviewerUserId = await DetermineReviewerAsync(request, firstStage);
+
+            if (reviewerUserId == null)
+            {
+                return ResultDto<TodoCreateResponse>.Failure("Unable to determine a reviewer for this todo");
+            }
+
+            // 5. Check if reviewer exists
+            var reviewer = await _userRepository.GetByIdAsync(reviewerUserId.Value);
+            if (reviewer == null)
+            {
+                return ResultDto<TodoCreateResponse>.Failure($"Reviewer user ID {reviewerUserId} does not exist");
+            }
+
+            // 6. Check if reviewer has the required role
+            var reviewerRoles = await _reviewQueryHelper.GetUserRolesAsync(reviewerUserId.Value);
+            if (!reviewerRoles.Contains(firstStage.RequiredRoleId))
+            {
+                return ResultDto<TodoCreateResponse>.Failure($"Reviewer does not have the required role (RoleId: {firstStage.RequiredRoleId})");
+            }
+
+            // 7. Create todo item
             var todo = new TodoLists
             {
                 Title = request.Title,
@@ -89,17 +93,17 @@ public class TodoService : ITodoService
                 CurrentStageId = firstStage.StageId,
                 Status = "pending_review_level1",
                 CreatedByUserId = request.UserId,
-                CurrentReviewerUserId = firstStage.SpecificReviewerUserId,
+                CurrentReviewerUserId = reviewerUserId,
                 CreatedAt = DateTime.UtcNow
             };
 
             await _todoRepository.AddAsync(todo);
 
-            // 5. Get stage and reviewer information
+            // 8. Get stage and reviewer information
             var stageName = firstStage.StageName;
-            var reviewerName = $"User{firstStage.SpecificReviewerUserId}";
+            var reviewerName = $"User{reviewerUserId}";
 
-            // 6. Return result
+            // 9. Return result
             var response = new TodoCreateResponse
             {
                 TodoListId = todo.TodoListId,
@@ -117,6 +121,82 @@ public class TodoService : ITodoService
         catch (Exception ex)
         {
             return ResultDto<TodoCreateResponse>.Failure($"Error occurred while creating todo item: {ex.Message}");
+        }
+    }
+
+    private async Task<int?> DetermineReviewerAsync(TodoCreateRequest request, ReviewStages firstStage)
+    {
+        // 1. Priority: use requested reviewer
+        if (request.CurrentReviewerUserId.HasValue)
+        {
+            return request.CurrentReviewerUserId.Value;
+        }
+
+        // 2. Use stage-specific reviewer
+        if (firstStage.SpecificReviewerUserId.HasValue)
+        {
+            return firstStage.SpecificReviewerUserId.Value;
+        }
+
+        // 3. Dynamic allocation based on role
+        return await FindReviewerByRoleAsync(firstStage.RequiredRoleId, request.UserId);
+    }
+
+    private async Task<int?> FindReviewerByRoleAsync(int requiredRoleId, int excludeUserId)
+    {
+        try
+        {
+            // Find all users with this role
+            var userRoles = await _userRoleRepository.FindAsync(
+                ur => ur.RoleId == requiredRoleId && ur.UserId != excludeUserId);
+
+            if (!userRoles.Any())
+                return null;
+
+            var userIds = userRoles.Select(ur => ur.UserId).Distinct().ToList();
+
+            // Simple load balancing strategy: find reviewer with fewest pending reviews
+            var reviewersWithWorkload = new List<(int UserId, int Workload)>();
+
+            foreach (var userId in userIds)
+            {
+                // Calculate how many pending reviews this reviewer currently has
+                var pendingCount = await GetPendingReviewCountAsync(userId);
+                reviewersWithWorkload.Add((userId, pendingCount));
+            }
+
+            // Select reviewer with lowest workload
+            var selectedReviewer = reviewersWithWorkload
+                .OrderBy(r => r.Workload)
+                .ThenBy(r => r.UserId)
+                .FirstOrDefault();
+
+            return selectedReviewer.UserId;
+        }
+        catch (Exception)
+        {
+            // If error, return first user with this role
+            var userRoles = await _userRoleRepository.FindAsync(
+                ur => ur.RoleId == requiredRoleId && ur.UserId != excludeUserId);
+
+            return userRoles.FirstOrDefault()?.UserId;
+        }
+    }
+
+    private async Task<int> GetPendingReviewCountAsync(int reviewerId)
+    {
+        try
+        {
+            // Query how many pending todo items this reviewer has
+            var pendingTodos = await _todoRepository.FindAsync(t =>
+                t.CurrentReviewerUserId == reviewerId &&
+                t.Status.StartsWith("pending_review"));
+
+            return pendingTodos.Count();
+        }
+        catch
+        {
+            return 0;
         }
     }
 }

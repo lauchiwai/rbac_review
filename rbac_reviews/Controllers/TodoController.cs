@@ -1,10 +1,6 @@
 ﻿using Common.DTOs;
-using Common.DTOs.Template.Requests;
-using Common.DTOs.Template.Response;
 using Common.DTOs.Todo.Requests;
 using Common.DTOs.Todo.Response;
-using Common.DTOs.Transition.Requests;
-using Common.DTOs.Transition.Response;
 using Microsoft.AspNetCore.Mvc;
 using Services.Interfaces;
 

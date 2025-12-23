@@ -4,7 +4,40 @@ using System.Collections.Concurrent;
 
 namespace Services.Helpers;
 
-public class ReviewQueryHelper
+public interface IReviewQueryHelper
+{
+    Task<HashSet<int>> GetUserRolesAsync(int userId);
+
+    Task<Dictionary<int, HashSet<int>>> GetUsersRolesAsync(IEnumerable<int> userIds);
+
+    Task<Dictionary<int, ReviewStages>> GetStagesByIdsAsync(IEnumerable<int> stageIds);
+
+    Task<Dictionary<int, List<ReviewStages>>> GetStagesByTemplateIdsAsync(IEnumerable<int> templateIds);
+
+    Task<Dictionary<int, List<StageTransitions>>> GetTransitionsByStageIdsAsync(IEnumerable<int> stageIds);
+
+    Task<Dictionary<int, Dictionary<string, StageTransitions>>> GetTransitionsByStageIdsWithActionsAsync(IEnumerable<int> stageIds);
+
+    Task<Dictionary<int, Users>> GetUsersByIdsAsync(IEnumerable<int> userIds);
+
+    Task<Dictionary<int, Roles>> GetRolesByIdsAsync(IEnumerable<int> roleIds);
+
+    Task<bool> UserHasPermissionAsync(int userId, string permissionName);
+
+    Task<Dictionary<int, HashSet<string>>> GetUsersPermissionsAsync(IEnumerable<int> userIds);
+
+    Task<HashSet<string>> GetUserPermissionsAsync(int userId);
+
+    string FormatUserName(int userId);
+
+    Dictionary<int, string> FormatUserNames(IEnumerable<int> userIds);
+
+    Task<bool> UserHasRequiredRoleAsync(int userId, int requiredRoleId);
+
+    Task<Dictionary<int, bool>> CheckUsersRolesAsync(IEnumerable<int> userIds, IEnumerable<int> requiredRoleIds);
+}
+
+public class ReviewQueryHelper : IReviewQueryHelper
 {
     private readonly IRepository<Users_Roles> _userRoleRepository;
     private readonly IRepository<Roles_Permissions> _rolePermissionRepository;
