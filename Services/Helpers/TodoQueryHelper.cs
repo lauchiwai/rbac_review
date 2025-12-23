@@ -4,7 +4,36 @@ using System.Collections.Concurrent;
 
 namespace Services.Helpers;
 
-public class TodoQueryHelper
+public interface ITodoQueryHelper
+{
+    Task<Dictionary<int, bool>> CheckUsersPermissionsAsync(
+        IEnumerable<int> userIds,
+        string permissionName);
+
+    Task<bool> CheckUserPermissionAsync(int userId, string permissionName);
+
+    Task<Dictionary<int, ReviewTemplates>> GetTemplatesByIdsAsync(IEnumerable<int> templateIds);
+
+    Task<Dictionary<int, Users>> GetUsersByIdsAsync(IEnumerable<int> userIds);
+
+    Task<Dictionary<int, Roles>> GetRolesByIdsAsync(IEnumerable<int> roleIds);
+
+    Task<Dictionary<int, List<ReviewStages>>> GetStagesByTemplateIdsAsync(IEnumerable<int> templateIds);
+
+    Task<Dictionary<int, ReviewStages>> GetFirstStagesByTemplateIdsAsync(IEnumerable<int> templateIds);
+
+    Task<Dictionary<int, bool>> CheckUsersExistAsync(IEnumerable<int> userIds);
+
+    Task<Dictionary<int, bool>> CheckRolesExistAsync(IEnumerable<int> roleIds);
+
+    Task<Dictionary<int, List<StageTransitions>>> GetTransitionsByTemplateIdsAsync(IEnumerable<int> templateIds);
+
+    bool ValidateStageOrders(List<int> stageOrders);
+
+    string FormatUserName(int userId);
+}
+
+public class TodoQueryHelper : ITodoQueryHelper
 {
     private readonly IRepository<Users_Roles> _userRoleRepository;
     private readonly IRepository<Roles_Permissions> _rolePermissionRepository;

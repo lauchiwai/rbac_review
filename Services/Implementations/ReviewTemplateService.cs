@@ -8,245 +8,411 @@ using Repositories.MyRepository;
 using Services.Helpers;
 using Services.Interfaces;
 
-namespace Services.Implementations;
-
-public class ReviewTemplateService : IReviewTemplateService
+namespace Services.Implementations
 {
-    private readonly IRepository<ReviewTemplates> _templateRepository;
-    private readonly IRepository<ReviewStages> _stageRepository;
-    private readonly IRepository<StageTransitions> _transitionRepository;
-    private readonly IRepository<Users_Roles> _userRoleRepository;
-    private readonly IRepository<Roles_Permissions> _rolePermissionRepository;
-    private readonly IRepository<Permissions> _permissionRepository;
-    private readonly IRepository<Users> _userRepository;
-    private readonly IRepository<Roles> _roleRepository;
-
-    private readonly TodoQueryHelper _queryHelper;
-
-    public ReviewTemplateService(
-        IRepository<ReviewTemplates> templateRepository,
-        IRepository<ReviewStages> stageRepository,
-        IRepository<StageTransitions> transitionRepository,
-        IRepository<Users_Roles> userRoleRepository,
-        IRepository<Roles_Permissions> rolePermissionRepository,
-        IRepository<Permissions> permissionRepository,
-        IRepository<Users> userRepository,
-        IRepository<Roles> roleRepository)
+    public class ReviewTemplateService : IReviewTemplateService
     {
-        _templateRepository = templateRepository;
-        _stageRepository = stageRepository;
-        _transitionRepository = transitionRepository;
-        _userRoleRepository = userRoleRepository;
-        _rolePermissionRepository = rolePermissionRepository;
-        _permissionRepository = permissionRepository;
-        _userRepository = userRepository;
-        _roleRepository = roleRepository;
+        private readonly IRepository<ReviewTemplates> _templateRepository;
+        private readonly IRepository<ReviewStages> _stageRepository;
+        private readonly IRepository<StageTransitions> _transitionRepository;
+        private readonly IRepository<Users> _userRepository;
+        private readonly ITodoQueryHelper _queryHelper;
 
-        _queryHelper = new TodoQueryHelper(
-            userRoleRepository,
-            rolePermissionRepository,
-            permissionRepository,
-            templateRepository,
-            stageRepository,
-            transitionRepository,
-            userRepository,
-            roleRepository);
-    }
-
-    public async Task<ResultDto<bool>> HasPermissionAsync(int userId, string permissionName)
-    {
-        try
+        public ReviewTemplateService(
+            IRepository<ReviewTemplates> templateRepository,
+            IRepository<ReviewStages> stageRepository,
+            IRepository<StageTransitions> transitionRepository,
+            IRepository<Users> userRepository,
+            ITodoQueryHelper todoQueryHelper)
         {
-            var hasPermission = await _queryHelper.CheckUserPermissionAsync(userId, permissionName);
-            return ResultDto<bool>.Success(hasPermission);
+            _templateRepository = templateRepository;
+            _stageRepository = stageRepository;
+            _transitionRepository = transitionRepository;
+            _userRepository = userRepository;
+            _queryHelper = todoQueryHelper;
         }
-        catch (Exception ex)
+
+        public async Task<ResultDto<bool>> HasPermissionAsync(int userId, string permissionName)
         {
-            return ResultDto<bool>.Failure($"Error occurred while checking permission: {ex.Message}");
-        }
-    }
-
-    public async Task<ResultDto<TemplateInitResponse>> InitializeReviewTemplateAsync(TemplateInitRequest request)
-    {
-        try
-        {
-            // 1. Check admin permission
-            var hasPermission = await _queryHelper.CheckUserPermissionAsync(request.UserId, "admin_manage");
-            if (!hasPermission)
-                return ResultDto<TemplateInitResponse>.Failure("User does not have admin permission (admin_manage)");
-
-            // 2. Validate input data
-            if (string.IsNullOrWhiteSpace(request.TemplateName))
-                return ResultDto<TemplateInitResponse>.Failure("Template name cannot be empty");
-
-            if (request.Stages == null || !request.Stages.Any())
-                return ResultDto<TemplateInitResponse>.Failure("At least one review stage is required");
-
-            // 3. Check stage order sequence
-            var stageOrders = request.Stages.Select(s => s.StageOrder).ToList();
-            if (!_queryHelper.ValidateStageOrders(stageOrders))
-                return ResultDto<TemplateInitResponse>.Failure("Stage order must be consecutive from 1 to N");
-
-            // 4. Batch validate reviewers and roles
-            // Only check non-null reviewers
-            var reviewerIds = request.Stages
-                .Where(s => s.SpecificReviewerUserId.HasValue)
-                .Select(s => s.SpecificReviewerUserId.Value)
-                .Distinct()
-                .ToList();
-
-            var roleIds = request.Stages.Select(s => s.RequiredRoleId).Distinct().ToList();
-
-            // Batch check if users exist (only check non-null users)
-            if (reviewerIds.Any())
+            try
             {
-                var usersExist = await _queryHelper.CheckUsersExistAsync(reviewerIds);
-                var missingUsers = usersExist.Where(kv => !kv.Value).Select(kv => kv.Key).ToList();
-                if (missingUsers.Any())
-                    return ResultDto<TemplateInitResponse>.Failure($"Reviewer ID {string.Join(", ", missingUsers)} does not exist");
+                var hasPermission = await _queryHelper.CheckUserPermissionAsync(userId, permissionName);
+                return ResultDto<bool>.Success(hasPermission);
             }
-
-            // Batch check if roles exist
-            var rolesExist = await _queryHelper.CheckRolesExistAsync(roleIds);
-            var missingRoles = rolesExist.Where(kv => !kv.Value).Select(kv => kv.Key).ToList();
-            if (missingRoles.Any())
-                return ResultDto<TemplateInitResponse>.Failure($"Required role ID {string.Join(", ", missingRoles)} does not exist");
-
-            // 5. Create template
-            var template = new ReviewTemplates
+            catch (Exception ex)
             {
-                TemplateName = request.TemplateName,
-                Description = request.Description,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                CreatedByUserId = request.UserId
-            };
+                return ResultDto<bool>.Failure($"Error occurred while checking permission: {ex.Message}");
+            }
+        }
 
-            await _templateRepository.AddAsync(template);
-
-            // 6. Batch create stages
-            var stages = new List<ReviewStages>();
-            foreach (var stageRequest in request.Stages)
+        public async Task<ResultDto<TemplateResponse>> CreateLevel1ReviewAsync(CreateLevel1ReviewRequest request)
+        {
+            try
             {
+                // 1. Check admin permission
+                var hasPermission = await _queryHelper.CheckUserPermissionAsync(request.UserId, "admin_manage");
+                if (!hasPermission)
+                    return ResultDto<TemplateResponse>.Failure("User does not have admin permission (admin_manage)");
+
+                // 2. Create template
+                var template = new ReviewTemplates
+                {
+                    TemplateName = request.TemplateName ?? "Level 1 Review Process",
+                    Description = request.Description ?? "Standard level 1 review process",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedByUserId = request.UserId
+                };
+
+                await _templateRepository.AddAsync(template);
+
+                // 3. Create level 1 review stage
                 var stage = new ReviewStages
                 {
                     TemplateId = template.TemplateId,
-                    StageName = stageRequest.StageName,
-                    StageOrder = stageRequest.StageOrder,
-                    RequiredRoleId = stageRequest.RequiredRoleId,
-                    SpecificReviewerUserId = stageRequest.SpecificReviewerUserId  // Can be null
+                    StageName = "Level 1 Review",
+                    StageOrder = 1,
+                    RequiredRoleId = 2, // Senior staff
+                    SpecificReviewerUserId = null // Dynamically assigned by system
                 };
-                stages.Add(stage);
-            }
 
-            // Batch add stages
-            foreach (var stage in stages)
-            {
                 await _stageRepository.AddAsync(stage);
-            }
 
-            // 7. Return result
-            var response = new TemplateInitResponse
-            {
-                TemplateId = template.TemplateId,
-                TemplateName = template.TemplateName,
-                CreatedAt = template.CreatedAt,
-                StageCount = request.Stages.Count
-            };
-
-            return ResultDto<TemplateInitResponse>.Success(response, "Review template initialized successfully");
-        }
-        catch (Exception ex)
-        {
-            return ResultDto<TemplateInitResponse>.Failure($"Error occurred while initializing review template: {ex.Message}");
-        }
-    }
-
-    public async Task<ResultDto<TransitionSetupResponse>> SetupStageTransitionsAsync(TransitionSetupRequest request)
-    {
-        try
-        {
-            // 1. Check admin permission - using optimized method
-            var hasPermission = await _queryHelper.CheckUserPermissionAsync(request.UserId, "admin_manage");
-            if (!hasPermission)
-                return ResultDto<TransitionSetupResponse>.Failure("User does not have admin permission (admin_manage)");
-
-            // 2. Batch check if template exists
-            var templatesDict = await _queryHelper.GetTemplatesByIdsAsync(new[] { request.TemplateId });
-            if (!templatesDict.TryGetValue(request.TemplateId, out var template))
-                return ResultDto<TransitionSetupResponse>.Failure($"Review template ID {request.TemplateId} does not exist");
-
-            // 3. Batch get all stages of the template
-            var stagesByTemplate = await _queryHelper.GetStagesByTemplateIdsAsync(new[] { request.TemplateId });
-            if (!stagesByTemplate.TryGetValue(request.TemplateId, out var stages) || !stages.Any())
-                return ResultDto<TransitionSetupResponse>.Failure($"Template ID {request.TemplateId} does not have any stages");
-
-            var stageIds = stages.Select(s => s.StageId).ToHashSet();
-
-            // 4. Batch validate transition rules
-            var existingTransitionsDict = await _queryHelper.GetTransitionsByTemplateIdsAsync(new[] { request.TemplateId });
-            var existingTransitions = existingTransitionsDict.TryGetValue(request.TemplateId, out var transitions)
-                ? transitions
-                : new List<StageTransitions>();
-
-            // Create cache of existing transition rules
-            var existingRulesCache = existingTransitions
-                .GroupBy(t => t.StageId)
-                .ToDictionary(g => g.Key, g => new HashSet<string>(g.Select(t => t.ActionName)));
-
-            foreach (var rule in request.TransitionRules)
-            {
-                // Check if stage belongs to the template
-                if (!stageIds.Contains(rule.StageId))
-                    return ResultDto<TransitionSetupResponse>.Failure($"Stage ID {rule.StageId} does not belong to template ID {request.TemplateId}");
-
-                // Check if next stage exists (if specified)
-                if (rule.NextStageId.HasValue && !stageIds.Contains(rule.NextStageId.Value))
-                    return ResultDto<TransitionSetupResponse>.Failure($"Next stage ID {rule.NextStageId} does not belong to template ID {request.TemplateId}");
-
-                // Batch check if same action name already exists
-                if (existingRulesCache.TryGetValue(rule.StageId, out var existingActions) &&
-                    existingActions.Contains(rule.ActionName))
+                // 4. Create transition rules
+                var transitions = new List<StageTransitions>
                 {
-                    return ResultDto<TransitionSetupResponse>.Failure($"Stage ID {rule.StageId} already has a transition rule with action name '{rule.ActionName}'");
-                }
-            }
-
-            // 5. Batch create transition rules
-            int addedCount = 0;
-            var transitionsToAdd = new List<StageTransitions>();
-
-            foreach (var rule in request.TransitionRules)
-            {
-                var transition = new StageTransitions
-                {
-                    StageId = rule.StageId,
-                    ActionName = rule.ActionName,
-                    NextStageId = rule.NextStageId,
-                    ResultStatus = rule.ResultStatus
+                    new StageTransitions
+                    {
+                        StageId = stage.StageId,
+                        ActionName = "approve",
+                        NextStageId = null, // No next stage (only one level)
+                        ResultStatus = "approved"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage.StageId,
+                        ActionName = "return",
+                        NextStageId = null,
+                        ResultStatus = "returned_to_creator"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage.StageId,
+                        ActionName = "reject",
+                        NextStageId = null,
+                        ResultStatus = "rejected"
+                    }
                 };
-                transitionsToAdd.Add(transition);
+
+                foreach (var transition in transitions)
+                {
+                    await _transitionRepository.AddAsync(transition);
+                }
+
+                // 5. Return result
+                var response = new TemplateResponse
+                {
+                    TemplateId = template.TemplateId,
+                    TemplateName = template.TemplateName,
+                    Description = template.Description,
+                    StageCount = 1,
+                    CreatedAt = template.CreatedAt
+                };
+
+                return ResultDto<TemplateResponse>.Success(response, "Level 1 review process created successfully");
             }
-
-            // Batch add transition rules
-            foreach (var transition in transitionsToAdd)
+            catch (Exception ex)
             {
-                await _transitionRepository.AddAsync(transition);
-                addedCount++;
+                return ResultDto<TemplateResponse>.Failure($"Error occurred while creating level 1 review process: {ex.Message}");
             }
-
-            // 6. Return result
-            var response = new TransitionSetupResponse
-            {
-                TransitionsAdded = addedCount,
-                TemplateId = request.TemplateId
-            };
-
-            return ResultDto<TransitionSetupResponse>.Success(response, "Stage transition rules set up successfully");
         }
-        catch (Exception ex)
+
+        public async Task<ResultDto<TemplateResponse>> CreateLevel2ReviewAsync(CreateLevel2ReviewRequest request)
         {
-            return ResultDto<TransitionSetupResponse>.Failure($"Error occurred while setting up stage transition rules: {ex.Message}");
+            try
+            {
+                // 1. Check admin permission
+                var hasPermission = await _queryHelper.CheckUserPermissionAsync(request.UserId, "admin_manage");
+                if (!hasPermission)
+                    return ResultDto<TemplateResponse>.Failure("User does not have admin permission (admin_manage)");
+
+                // 2. Check if level 1 reviewer exists
+                if (request.Level1ReviewerId.HasValue)
+                {
+                    var reviewer = await _userRepository.GetByIdAsync(request.Level1ReviewerId.Value);
+                    if (reviewer == null)
+                        return ResultDto<TemplateResponse>.Failure($"Level 1 reviewer ID {request.Level1ReviewerId} does not exist");
+                }
+
+                // 3. Create template
+                var template = new ReviewTemplates
+                {
+                    TemplateName = request.TemplateName ?? "Level 2 Review Process",
+                    Description = request.Description ?? "Standard level 2 review process, including level 1 and level 2 review",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedByUserId = request.UserId
+                };
+
+                await _templateRepository.AddAsync(template);
+
+                // 4. Create two review stages
+                var stage1 = new ReviewStages
+                {
+                    TemplateId = template.TemplateId,
+                    StageName = "Level 1 Review",
+                    StageOrder = 1,
+                    RequiredRoleId = 2, // Senior staff
+                    SpecificReviewerUserId = request.Level1ReviewerId
+                };
+
+                var stage2 = new ReviewStages
+                {
+                    TemplateId = template.TemplateId,
+                    StageName = "Level 2 Review",
+                    StageOrder = 2,
+                    RequiredRoleId = 3, // Manager
+                    SpecificReviewerUserId = null // Dynamically assigned by system
+                };
+
+                await _stageRepository.AddAsync(stage1);
+                await _stageRepository.AddAsync(stage2);
+
+                // 5. Create transition rules
+                var transitions = new List<StageTransitions>
+                {
+                    // Level 1 review stage transition rules
+                    new StageTransitions
+                    {
+                        StageId = stage1.StageId,
+                        ActionName = "approve",
+                        NextStageId = stage2.StageId,
+                        ResultStatus = "pending_review_level2"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage1.StageId,
+                        ActionName = "return",
+                        NextStageId = null,
+                        ResultStatus = "returned_to_creator"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage1.StageId,
+                        ActionName = "reject",
+                        NextStageId = null,
+                        ResultStatus = "rejected"
+                    },
+
+                    // Level 2 review stage transition rules
+                    new StageTransitions
+                    {
+                        StageId = stage2.StageId,
+                        ActionName = "approve",
+                        NextStageId = null,
+                        ResultStatus = "approved"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage2.StageId,
+                        ActionName = "return",
+                        NextStageId = null,
+                        ResultStatus = "returned_to_level1"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage2.StageId,
+                        ActionName = "reject",
+                        NextStageId = null,
+                        ResultStatus = "rejected"
+                    }
+                };
+
+                foreach (var transition in transitions)
+                {
+                    await _transitionRepository.AddAsync(transition);
+                }
+
+                // 6. Return result
+                var response = new TemplateResponse
+                {
+                    TemplateId = template.TemplateId,
+                    TemplateName = template.TemplateName,
+                    Description = template.Description,
+                    StageCount = 2,
+                    CreatedAt = template.CreatedAt
+                };
+
+                return ResultDto<TemplateResponse>.Success(response, "Level 2 review process created successfully");
+            }
+            catch (Exception ex)
+            {
+                return ResultDto<TemplateResponse>.Failure($"Error occurred while creating level 2 review process: {ex.Message}");
+            }
+        }
+
+        public async Task<ResultDto<TemplateResponse>> CreateLevel3ReviewAsync(CreateLevel3ReviewRequest request)
+        {
+            try
+            {
+                // 1. Check admin permission
+                var hasPermission = await _queryHelper.CheckUserPermissionAsync(request.UserId, "admin_manage");
+                if (!hasPermission)
+                    return ResultDto<TemplateResponse>.Failure("User does not have admin permission (admin_manage)");
+
+                // 2. Check if reviewers exist
+                if (request.Level1ReviewerId.HasValue)
+                {
+                    var reviewer1 = await _userRepository.GetByIdAsync(request.Level1ReviewerId.Value);
+                    if (reviewer1 == null)
+                        return ResultDto<TemplateResponse>.Failure($"Level 1 reviewer ID {request.Level1ReviewerId} does not exist");
+                }
+
+                if (request.Level2ReviewerId.HasValue)
+                {
+                    var reviewer2 = await _userRepository.GetByIdAsync(request.Level2ReviewerId.Value);
+                    if (reviewer2 == null)
+                        return ResultDto<TemplateResponse>.Failure($"Level 2 reviewer ID {request.Level2ReviewerId} does not exist");
+                }
+
+                // 3. Create template
+                var template = new ReviewTemplates
+                {
+                    TemplateName = request.TemplateName ?? "Level 3 Review Process",
+                    Description = request.Description ?? "Standard level 3 review process, including level 1, level 2, and level 3 review",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedByUserId = request.UserId
+                };
+
+                await _templateRepository.AddAsync(template);
+
+                // 4. Create three review stages
+                var stage1 = new ReviewStages
+                {
+                    TemplateId = template.TemplateId,
+                    StageName = "Level 1 Review",
+                    StageOrder = 1,
+                    RequiredRoleId = 2, // Senior staff
+                    SpecificReviewerUserId = request.Level1ReviewerId
+                };
+
+                var stage2 = new ReviewStages
+                {
+                    TemplateId = template.TemplateId,
+                    StageName = "Level 2 Review",
+                    StageOrder = 2,
+                    RequiredRoleId = 3, // Manager
+                    SpecificReviewerUserId = request.Level2ReviewerId
+                };
+
+                var stage3 = new ReviewStages
+                {
+                    TemplateId = template.TemplateId,
+                    StageName = "Level 3 Review",
+                    StageOrder = 3,
+                    RequiredRoleId = 4, // Administrator
+                    SpecificReviewerUserId = null // Dynamically assigned by system
+                };
+
+                await _stageRepository.AddAsync(stage1);
+                await _stageRepository.AddAsync(stage2);
+                await _stageRepository.AddAsync(stage3);
+
+                // 5. Create transition rules
+                var transitions = new List<StageTransitions>
+                {
+                    // Level 1 review stage transition rules
+                    new StageTransitions
+                    {
+                        StageId = stage1.StageId,
+                        ActionName = "approve",
+                        NextStageId = stage2.StageId,
+                        ResultStatus = "pending_review_level2"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage1.StageId,
+                        ActionName = "return",
+                        NextStageId = null,
+                        ResultStatus = "returned_to_creator"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage1.StageId,
+                        ActionName = "reject",
+                        NextStageId = null,
+                        ResultStatus = "rejected"
+                    },
+
+                    // Level 2 review stage transition rules
+                    new StageTransitions
+                    {
+                        StageId = stage2.StageId,
+                        ActionName = "approve",
+                        NextStageId = stage3.StageId,
+                        ResultStatus = "pending_review_level3"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage2.StageId,
+                        ActionName = "return",
+                        NextStageId = null,
+                        ResultStatus = "returned_to_level1"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage2.StageId,
+                        ActionName = "reject",
+                        NextStageId = null,
+                        ResultStatus = "rejected"
+                    },
+
+                    // Level 3 review stage transition rules
+                    new StageTransitions
+                    {
+                        StageId = stage3.StageId,
+                        ActionName = "approve",
+                        NextStageId = null,
+                        ResultStatus = "approved"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage3.StageId,
+                        ActionName = "return",
+                        NextStageId = null,
+                        ResultStatus = "returned_to_level2"
+                    },
+                    new StageTransitions
+                    {
+                        StageId = stage3.StageId,
+                        ActionName = "reject",
+                        NextStageId = null,
+                        ResultStatus = "rejected"
+                    }
+                };
+
+                foreach (var transition in transitions)
+                {
+                    await _transitionRepository.AddAsync(transition);
+                }
+
+                // 6. Return result
+                var response = new TemplateResponse
+                {
+                    TemplateId = template.TemplateId,
+                    TemplateName = template.TemplateName,
+                    Description = template.Description,
+                    StageCount = 3,
+                    CreatedAt = template.CreatedAt
+                };
+
+                return ResultDto<TemplateResponse>.Success(response, "Level 3 review process created successfully");
+            }
+            catch (Exception ex)
+            {
+                return ResultDto<TemplateResponse>.Failure($"Error occurred while creating level 3 review process: {ex.Message}");
+            }
         }
     }
 }
